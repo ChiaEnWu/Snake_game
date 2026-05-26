@@ -8,7 +8,7 @@
         <span class="title-line" v-for="(char, i) in titleChars" :key="i"
           :style="{ animationDelay: `${i * 0.08}s` }">{{ char }}</span>
       </h1>
-      <p class="subtitle">經典貪吃蛇 · 全新進化</p>
+      <p class="subtitle">{{ t('start.subtitle') }}</p>
     </div>
 
     <div class="start-content">
@@ -22,7 +22,7 @@
 
       <div class="info-panel">
         <div class="info-section">
-          <h3 class="info-title">🎮 操作方式</h3>
+          <h3 class="info-title">{{ t('start.controls') }}</h3>
           <div class="key-bindings">
             <div class="key-row">
               <kbd>W</kbd><kbd>↑</kbd>
@@ -33,26 +33,26 @@
               <kbd>D</kbd><kbd>→</kbd>
             </div>
           </div>
-          <p class="info-text">方向鍵 / WASD 控制移動</p>
+          <p class="info-text">{{ t('start.controlsDesc') }}</p>
         </div>
 
         <div class="info-section">
-          <h3 class="info-title">⚡ 技能系統</h3>
+          <h3 class="info-title">{{ t('start.skills') }}</h3>
           <div class="skills-preview">
-            <div v-for="skill in skills" :key="skill.id" class="skill-tag">
+            <div v-for="skill in previewSkills" :key="skill.id" class="skill-tag">
               <span class="skill-icon">{{ skill.icon }}</span>
-              <span class="skill-name">{{ skill.name }}</span>
+              <span class="skill-name">{{ t('skill.' + skill.id) }}</span>
               <span class="skill-key">{{ skill.key }}</span>
             </div>
           </div>
-          <p class="info-text">吃掉金色食物獲得技能，按 1-4 使用</p>
+          <p class="info-text">{{ t('start.skillDesc') }}</p>
         </div>
 
         <div class="info-section">
-          <h3 class="info-title">💡 提示</h3>
+          <h3 class="info-title">{{ t('start.tips') }}</h3>
           <ul class="tips">
-            <li>連續進食可累積 Combo 加成</li>
-            <li>按 <kbd>P</kbd> 暫停 / 繼續</li>
+            <li>{{ t('start.comboTip') }}</li>
+            <li>{{ t('start.pauseTip') }} <kbd>P</kbd></li>
           </ul>
         </div>
       </div>
@@ -60,13 +60,17 @@
 
     <div class="start-actions">
       <button class="start-btn" @click="$emit('start')">
-        <span class="btn-text">開始遊戲</span>
-        <span class="btn-hint">按 Enter / Space</span>
+        <span class="btn-text">{{ t('start.startBtn') }}</span>
+        <span class="btn-hint">{{ t('start.startHint') }}</span>
       </button>
 
       <div class="high-score-display" v-if="highScore > 0">
-        🏆 最高紀錄: {{ highScore }}
+        {{ t('start.highScore') }} {{ highScore }}
       </div>
+    </div>
+
+    <div class="lang-wrapper">
+      <LangSelector />
     </div>
 
     <div class="decorations">
@@ -78,19 +82,25 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from '../i18n/index.js'
+import LangSelector from './LangSelector.vue'
+
 defineProps({
   highScore: { type: Number, default: 0 }
 })
 
 defineEmits(['start'])
 
-const titleChars = '貪吃蛇'.split('')
+const { t } = useI18n()
 
-const skills = [
-  { id: 'speedUp', name: '加速', icon: '🚀', key: '1' },
-  { id: 'slowDown', name: '減速', icon: '🐢', key: '2' },
-  { id: 'ghost', name: '無敵', icon: '👻', key: '3' },
-  { id: 'doubleScore', name: '雙倍', icon: '💎', key: '4' }
+const titleChars = computed(() => t('start.title').split(''))
+
+const previewSkills = [
+  { id: 'speedUp', icon: '🚀', key: '1' },
+  { id: 'slowDown', icon: '🐢', key: '2' },
+  { id: 'ghost', icon: '👻', key: '3' },
+  { id: 'doubleScore', icon: '💎', key: '4' }
 ]
 
 const previewSnake = [32, 33, 34, 35, 45, 55, 65, 66, 67]
@@ -366,6 +376,13 @@ kbd {
   font-size: 16px;
   color: var(--neon-gold);
   font-weight: 700;
+}
+
+.lang-wrapper {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 10;
 }
 
 .decorations {

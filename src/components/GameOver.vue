@@ -2,19 +2,19 @@
   <div class="game-over-overlay">
     <div class="game-over-modal">
       <div class="game-over-icon">💀</div>
-      <h2 class="game-over-title">遊戲結束</h2>
+      <h2 class="game-over-title">{{ t('gameOver.title') }}</h2>
 
       <div class="results">
         <div class="result-row">
-          <span class="result-label">得分</span>
+          <span class="result-label">{{ t('gameOver.score') }}</span>
           <span class="result-value score" :key="score">{{ score }}</span>
         </div>
         <div class="result-row" v-if="score >= highScore && score > 0">
           <span class="result-label">🏆</span>
-          <span class="result-value new-record">新紀錄！</span>
+          <span class="result-value new-record">{{ t('gameOver.newRecord') }}</span>
         </div>
         <div class="result-row">
-          <span class="result-label">最高紀錄</span>
+          <span class="result-label">{{ t('gameOver.highScore') }}</span>
           <span class="result-value hs">{{ highScore }}</span>
         </div>
       </div>
@@ -22,35 +22,40 @@
       <div class="stats">
         <div class="stat-item">
           <span class="stat-icon">📏</span>
-          <span class="stat-label">蛇身長度</span>
+          <span class="stat-label">{{ t('gameOver.length') }}</span>
           <span class="stat-value">{{ snakeLength }}</span>
         </div>
         <div class="stat-item">
           <span class="stat-icon">🔥</span>
-          <span class="stat-label">最大 Combo</span>
+          <span class="stat-label">{{ t('gameOver.maxCombo') }}</span>
           <span class="stat-value">{{ maxCombo }}</span>
         </div>
         <div class="stat-item">
           <span class="stat-icon">⚡</span>
-          <span class="stat-label">技能解鎖</span>
+          <span class="stat-label">{{ t('gameOver.skillCount') }}</span>
           <span class="stat-value">{{ skillCount }}</span>
         </div>
       </div>
 
       <div class="game-over-actions">
         <button class="action-btn primary" @click="$emit('restart')">
-          🔄 再玩一次
+          {{ t('gameOver.replay') }}
         </button>
         <button class="action-btn secondary" @click="$emit('menu')">
-          🏠 回到主選單
+          {{ t('gameOver.menu') }}
         </button>
+      </div>
+
+      <div class="go-lang">
+        <LangSelector />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { useI18n } from '../i18n/index.js'
+import LangSelector from './LangSelector.vue'
 
 const props = defineProps({
   score: { type: Number, default: 0 },
@@ -61,6 +66,8 @@ const props = defineProps({
 })
 
 defineEmits(['restart', 'menu'])
+
+const { t } = useI18n()
 </script>
 
 <style scoped>
@@ -73,12 +80,6 @@ defineEmits(['restart', 'menu'])
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(8px);
   z-index: 100;
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .game-over-modal {
@@ -182,6 +183,12 @@ defineEmits(['restart', 'menu'])
   font-size: 18px;
   font-weight: 700;
   color: var(--neon-blue);
+}
+
+.go-lang {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
 }
 
 .game-over-actions {

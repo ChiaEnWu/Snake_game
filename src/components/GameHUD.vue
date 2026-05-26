@@ -2,7 +2,7 @@
   <div class="hud">
     <div class="hud-left">
       <div class="score-display">
-        <div class="score-label">得分</div>
+        <div class="score-label">{{ t('hud.score') }}</div>
         <div class="score-value" :key="score">{{ score }}</div>
         <div v-if="combo >= 3" class="combo-badge">
           🔥 x{{ combo }}
@@ -13,21 +13,21 @@
     <div class="hud-center">
       <div class="game-status">
         <div v-if="ghostActive" class="status-badge ghost">
-          👻 無敵
+          {{ t('hud.ghost') }}
         </div>
         <div v-if="doubleActive" class="status-badge double">
-          💎 雙倍
+          {{ t('hud.double') }}
         </div>
         <div v-if="speedActive" class="status-badge speed">
-          🚀 加速
+          {{ t('hud.speed') }}
         </div>
         <div v-if="slowActive" class="status-badge slow">
-          🐢 減速
+          {{ t('hud.slow') }}
         </div>
       </div>
       <div class="pause-hint" v-if="paused">
-        <span class="pause-text">⏸ 暫停中</span>
-        <span class="pause-sub">按 P 繼續</span>
+        <span class="pause-text">{{ t('hud.paused') }}</span>
+        <span class="pause-sub">{{ t('hud.pauseSub') }}</span>
       </div>
     </div>
 
@@ -42,6 +42,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from '../i18n/index.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   score: { type: Number, default: 0 },

@@ -1,6 +1,6 @@
 <template>
   <div class="skill-bar">
-    <div class="skill-bar-label">⚡ 技能</div>
+    <div class="skill-bar-label">{{ t('skillBar.label') }}</div>
     <div class="skills">
       <button v-for="skill in SKILLS" :key="skill.id" class="skill-btn"
         :class="{
@@ -13,13 +13,13 @@
         @click="$emit('use-skill', skill.id)"
         :title="skillTooltip(skill)">
         <div class="skill-icon">{{ skill.icon }}</div>
-        <div class="skill-name">{{ skill.name }}</div>
+        <div class="skill-name">{{ t('skill.' + skill.id) }}</div>
         <div class="skill-key">{{ skill.key }}</div>
         <div v-if="isActive(skill.id)" class="skill-timer">
           <div class="timer-bar" :style="{ width: activePercent(skill.id) + '%' }"></div>
         </div>
         <div v-if="isCooldown(skill.id)" class="skill-cooldown-overlay">
-          <span>{{ cooldownRemaining(skill.id) }}s</span>
+          <span>{{ cooldownRemaining(skill.id) }}{{ t('skillBar.sec') }}</span>
         </div>
         <div v-if="!isOwned(skill.id)" class="skill-lock">🔒</div>
       </button>
@@ -28,8 +28,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { useI18n } from '../i18n/index.js'
 import { GAME_SKILLS as SKILLS } from '../composables/useGame.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   ownedSkills: { type: Array, default: () => [] },
@@ -39,8 +41,6 @@ const props = defineProps({
 })
 
 defineEmits(['use-skill'])
-
-
 
 function isOwned(id) {
   return props.ownedSkills.some(s => s.id === id)
@@ -57,8 +57,7 @@ function isCooldown(id) {
 function activePercent(id) {
   const remaining = props.activeSkills[id]
   if (!remaining) return 0
-  const total = SKILL_DURATIONS[id]
-  return (remaining / total) * 100
+  return (remaining / 5) * 100
 }
 
 function cooldownRemaining(id) {
@@ -66,10 +65,10 @@ function cooldownRemaining(id) {
 }
 
 function skillTooltip(skill) {
-  if (isActive(skill.id)) return `${skill.name} 進行中`
-  if (isCooldown(skill.id)) return `冷卻中 ${cooldownRemaining(skill.id)}s`
-  if (isOwned(skill.id)) return `按 ${skill.key} 使用 ${skill.name}`
-  return '吃掉金色食物解鎖'
+  if (isActive(skill.id)) return t('skillBar.active', { name: t('skill.' + skill.id) })
+  if (isCooldown(skill.id)) return t('skillBar.cooldown', { sec: cooldownRemaining(skill.id) })
+  if (isOwned(skill.id)) return t('skillBar.use', { key: skill.key, name: t('skill.' + skill.id) })
+  return t('skillBar.locked')
 }
 </script>
 

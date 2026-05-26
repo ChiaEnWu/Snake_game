@@ -1,4 +1,5 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { play } from './useSound.js'
 
 export const GRID_SIZE = 20
 const INITIAL_SPEED = 180
@@ -146,46 +147,41 @@ export function useGame() {
     if (!ownedSkills.value.find(s => s.id === skillId)) return
 
     activeSkills.value = { ...activeSkills.value, [skillId]: 5 }
+    play('skill')
 
     if (skillId === 'speedUp') {
       currentSpeed.value = Math.max(MIN_SPEED, Math.floor(baseSpeed.value * 0.5))
+      scheduleNextTick()
     } else if (skillId === 'slowDown') {
       currentSpeed.value = Math.min(MAX_SPEED, Math.floor(baseSpeed.value * 2))
+      scheduleNextTick()
     }
   }
 
   function updateSkills(dt) {
     const newActive = { ...activeSkills.value }
-    let changed = false
     for (const [id, remaining] of Object.entries(newActive)) {
       newActive[id] = remaining - dt
       if (newActive[id] <= 0) {
         delete newActive[id]
-        changed = true
         const skill = SKILLS.find(s => s.id === id)
         cooldowns.value = { ...cooldowns.value, [id]: skill.cooldown }
-
         if (id === 'speedUp' || id === 'slowDown') {
           currentSpeed.value = baseSpeed.value
         }
+        play('skillEnd')
       }
     }
-    if (changed || Object.keys(newActive).length !== Object.keys(activeSkills.value).length) {
-      activeSkills.value = newActive
-    }
+    activeSkills.value = newActive
 
     const newCD = { ...cooldowns.value }
-    let cdChanged = false
     for (const [id, remaining] of Object.entries(newCD)) {
       newCD[id] = remaining - dt
       if (newCD[id] <= 0) {
         delete newCD[id]
-        cdChanged = true
       }
     }
-    if (cdChanged) {
-      cooldowns.value = newCD
-    }
+    cooldowns.value = newCD
   }
 
   function setDirection(dir) {
@@ -219,9 +215,13 @@ export function useGame() {
     }
 
     if (key === 'p' || key === 'P') {
-      if (gameState.value === 'playing') gameState.value = 'paused'
+      if (gameState.value === 'playing') {
+        gameState.value = 'paused'
+        play('pause')
+      }
       else if (gameState.value === 'paused') {
         gameState.value = 'playing'
+        play('pause')
         scheduleNextTick()
       }
     }
@@ -270,6 +270,7 @@ export function useGame() {
       } else {
         isDying = true
         deathEffect.value = { ...head }
+        play('death')
         setTimeout(() => {
           gameState.value = 'gameover'
           if (score.value > highScore.value) {
@@ -285,6 +286,7 @@ export function useGame() {
     if (!wallHit && snakeSet.value.has(`${newHead.x},${newHead.y}`)) {
       isDying = true
       deathEffect.value = { ...newHead }
+      play('death')
       setTimeout(() => {
         gameState.value = 'gameover'
         if (score.value > highScore.value) {
@@ -303,10 +305,14 @@ export function useGame() {
     if (newHead.x === food.value.x && newHead.y === food.value.y) {
       ate = true
       combo.value += 1
+      if (combo.value === 3) play('combo')
+      else if (combo.value === 5) play('combo2')
+      else if (combo.value === 10) play('combo3')
       const bonus = Math.floor(combo.value / 5) + 1
       const multiplier = activeSkills.value.doubleScore ? 2 : 1
       score.value += bonus * multiplier
       eatEffect.value = { x: newHead.x, y: newHead.y, type: 'normal', time: Date.now() }
+      play('eat')
       spawnFood()
     }
 
@@ -318,6 +324,7 @@ export function useGame() {
       activateRandomSkill()
       specialFood.value = null
       eatEffect.value = { x: newHead.x, y: newHead.y, type: 'special', time: Date.now() }
+      play('special')
     }
 
     if (!ate) {

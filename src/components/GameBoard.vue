@@ -124,13 +124,18 @@ function dirClass(dir) {
   display: grid;
   grid-template-columns: repeat(var(--grid-size), var(--cell-size));
   grid-template-rows: repeat(var(--grid-size), var(--cell-size));
-  gap: 1px;
+  gap: 0;
   padding: 0;
+  border-top: 1px solid rgba(0, 255, 136, 0.04);
+  border-left: 1px solid rgba(0, 255, 136, 0.04);
 }
 
 .grid-cell {
+  box-sizing: border-box;
   width: var(--cell-size);
   height: var(--cell-size);
+  border-right: 1px solid rgba(0, 255, 136, 0.04);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.04);
   border-radius: 2px;
   background: rgba(255, 255, 255, 0.02);
   transition: background 0.1s, box-shadow 0.1s, transform 0.1s;
@@ -230,7 +235,7 @@ function dirClass(dir) {
   50% { transform: scale(1.05) rotate(10deg); }
 }
 
-.grid-cell.edge-cell:not(.food-cell):not(.special-food) {
+.grid-cell.edge-cell:not(.food-cell):not(.special-food):not(.snake-head):not(.snake-body) {
   background: rgba(0, 255, 136, 0.05);
 }
 

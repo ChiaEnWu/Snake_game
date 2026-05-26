@@ -1,73 +1,96 @@
 <template>
   <div class="app">
-    <StartScreen
-      v-if="gameState === 'start'"
-      :highScore="highScore"
-      @start="startGame"
-    />
-
-    <div v-else class="game-layout">
-      <div class="game-header">
-        <button class="back-btn" @click="backToMenu" title="回到主選單">
-          ← 離開
-        </button>
-        <div class="game-mode-badge" v-if="activeSkills.ghost">👻 無敵模式</div>
-      </div>
-
-      <SkillBar
-        :ownedSkills="ownedSkills"
-        :activeSkills="activeSkills"
-        :cooldowns="cooldowns"
-        :gameState="gameState"
-        @use-skill="useSkill"
+    <Transition name="screen">
+      <StartScreen
+        v-if="gameState === 'start'"
+        key="start"
+        :highScore="highScore"
+        @start="handleStart"
       />
+    </Transition>
 
-      <GameHUD
+    <Transition name="screen">
+      <div v-if="gameState !== 'start'" class="game-layout" :key="gameKey"
+        :class="{ 'gameover-bg': gameState === 'gameover' }">
+        <div class="game-header">
+          <button class="back-btn" @click="backToMenu" :title="t('app.backTitle')">
+            ← {{ t('app.back') }}
+          </button>
+          <div class="game-mode-badge" v-if="activeSkills.ghost">{{ t('app.ghostMode') }}</div>
+          <div class="game-header-right">
+            <LangSelector />
+          </div>
+        </div>
+
+        <SkillBar
+          :ownedSkills="ownedSkills"
+          :activeSkills="activeSkills"
+          :cooldowns="cooldowns"
+          :gameState="gameState"
+          @use-skill="useSkill"
+        />
+
+        <GameHUD
+          :score="score"
+          :highScore="highScore"
+          :combo="combo"
+          :activeSkills="activeSkills"
+          :gameState="gameState"
+        />
+
+        <GameBoard
+          :snake="snake"
+          :food="food"
+          :specialFood="specialFood"
+          :direction="direction"
+          :eatEffect="eatEffect"
+          :deathEffect="deathEffect"
+        />
+
+        <div class="game-controls-hint">
+          <span>{{ t('app.controls') }}</span>
+          <span class="sep">|</span>
+          <span>{{ t('app.pause') }}</span>
+          <span class="sep">|</span>
+          <span>{{ t('app.skillKeys') }}</span>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition name="flash">
+      <div v-if="showFlash" class="death-flash"></div>
+    </Transition>
+
+    <Transition name="overlay">
+      <GameOver
+        v-if="gameState === 'gameover'"
+        key="gameover"
         :score="score"
         :highScore="highScore"
-        :combo="combo"
-        :activeSkills="activeSkills"
-        :gameState="gameState"
+        :snakeLength="snake.length"
+        :maxCombo="combo"
+        :skillCount="ownedSkills.length"
+        @restart="handleRestart"
+        @menu="backToMenu"
       />
-
-      <GameBoard
-        :snake="snake"
-        :food="food"
-        :specialFood="specialFood"
-        :direction="direction"
-        :eatEffect="eatEffect"
-        :deathEffect="deathEffect"
-      />
-
-      <div class="game-controls-hint">
-        <span>WASD / 方向鍵 移動</span>
-        <span class="sep">|</span>
-        <span>P 暫停</span>
-        <span class="sep">|</span>
-        <span>1-4 使用技能</span>
-      </div>
-    </div>
-
-    <GameOver
-      v-if="gameState === 'gameover'"
-      :score="score"
-      :highScore="highScore"
-      :snakeLength="snake.length"
-      :maxCombo="combo"
-      :skillCount="ownedSkills.length"
-      @restart="handleRestart"
-      @menu="backToMenu"
-    />
+    </Transition>
   </div>
 </template>
 
 <script setup>
+import { ref, watch } from 'vue'
 import StartScreen from './components/StartScreen.vue'
 import GameBoard from './components/GameBoard.vue'
 import GameHUD from './components/GameHUD.vue'
 import SkillBar from './components/SkillBar.vue'
 import GameOver from './components/GameOver.vue'
+import LangSelector from './components/LangSelector.vue'
 import { useGame } from './composables/useGame.js'
+import { useI18n } from './i18n/index.js'
+import { useSound, preloadAudio } from './composables/useSound.js'
+
+const { t } = useI18n()
+const { play } = useSound()
 
 const {
   snake,
@@ -92,12 +115,30 @@ const {
   setDirection
 } = useGame()
 
+const gameKey = ref(0)
+const showFlash = ref(false)
+
+watch(gameState, (val, old) => {
+  if (val === 'gameover' && old === 'playing') {
+    showFlash.value = true
+    setTimeout(() => { showFlash.value = false }, 350)
+  }
+})
+
+function handleStart() {
+  preloadAudio()
+  gameKey.value++
+  startGame()
+}
+
 function backToMenu() {
   stopLoop()
   gameState.value = 'start'
+  gameKey.value++
 }
 
 function handleRestart() {
+  gameKey.value++
   startGame()
 }
 </script>
@@ -117,7 +158,12 @@ function handleRestart() {
   align-items: center;
   gap: 12px;
   padding: 20px;
-  animation: fadeInScale 0.4s ease-out;
+}
+
+.game-layout.gameover-bg {
+  filter: blur(3px) brightness(0.4);
+  pointer-events: none;
+  transition: filter 0.3s ease;
 }
 
 .game-header {
@@ -125,6 +171,10 @@ function handleRestart() {
   align-items: center;
   gap: 12px;
   min-width: 500px;
+}
+
+.game-header-right {
+  margin-left: auto;
 }
 
 .back-btn {
@@ -166,5 +216,60 @@ function handleRestart() {
 
 .sep {
   color: rgba(255, 255, 255, 0.15);
+}
+
+/* -- Screen transitions -- */
+.screen-enter-active {
+  animation: fadeInScale 0.4s ease-out;
+}
+.screen-leave-active {
+  animation: fadeOutScale 0.3s ease-in;
+}
+
+@keyframes fadeOutScale {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.92); }
+}
+
+/* -- Flash overlay -- */
+.death-flash {
+  position: fixed;
+  inset: 0;
+  background: white;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.flash-enter-active {
+  animation: flashIn 0.15s ease-out;
+}
+.flash-leave-active {
+  animation: flashOut 0.2s ease-in;
+}
+
+@keyframes flashIn {
+  0% { opacity: 0; }
+  100% { opacity: 0.3; }
+}
+@keyframes flashOut {
+  0% { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+
+/* -- Overlay transitions -- */
+.overlay-enter-active {
+  animation: overlayIn 0.4s ease-out 0.2s both;
+}
+.overlay-leave-active {
+  animation: overlayOut 0.25s ease-in;
+}
+
+@keyframes overlayIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes overlayOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
 }
 </style>
