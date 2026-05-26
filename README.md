@@ -1,7 +1,7 @@
 # Evolved Snake
 
 ## Vercel 連結
-<!-- 貼上你的 Vercel 連結 -->
+snakegame-fy4ixy8x5-chia-en-wu-s-projects.vercel.app
 
 ## 設計理念
 
